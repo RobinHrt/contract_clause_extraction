@@ -1,0 +1,94 @@
+domain      = "contract_clause_extraction"
+description = "Extract key clauses and obligations from vendor contracts"
+main_pipe   = "extract_contract_clauses"
+
+[concept.ContractClause]
+description = "A key clause extracted from a vendor contract"
+
+[concept.ContractClause.structure]
+clause_title = { type = "text", description = "Title or heading of the clause", required = true }
+clause_text = { type = "text", description = "Full text of the clause", required = true }
+obligation_type = { type = "text", description = "Type of obligation imposed", required = true, choices = [
+  "must_do",
+  "must_not_do",
+  "may_do",
+  "conditional",
+] }
+risk_level = { type = "text", description = "Risk level of this clause", required = true, choices = [
+  "low",
+  "medium",
+  "high",
+  "critical",
+] }
+parties_involved = { type = "list", description = "Parties referenced in this clause" }
+
+
+[concept.ContractAnalysis]
+description = "Complete analysis of a single vendor contract"
+
+[concept.ContractAnalysis.structure]
+contract_title = { type = "text", description = "Title of the contract", required = true }
+vendor_name = { type = "text", description = "Name of the vendor", required = true }
+effective_date = "Effective date of the contract"
+expiration_date = "Expiration date of the contract"
+overall_risk_level = { type = "text", description = "Overall risk assessment", required = true, choices = [
+  "low",
+  "medium",
+  "high",
+  "critical",
+] }
+clauses = { type = "list", description = "Key clauses extracted from the contract" }
+summary = { type = "text", description = "Executive summary of the contract", required = true }
+red_flags = { type = "list", description = "Notable red flags or concerns" }
+
+[pipe.extract_contract_clauses]
+type             = "PipeBatch"
+description      = "Process a batch of vendor contracts to extract clauses and obligations"
+inputs           = { contracts = "Document[]" }
+output           = "ContractAnalysis[]"
+branch_pipe_code = "process_single_contract"
+input_list_name  = "contracts"
+input_item_name  = "contract"
+
+[pipe.process_single_contract]
+type = "PipeSequence"
+description = "Extract and analyze a single contract document"
+inputs = { contract = "Document" }
+output = "ContractAnalysis"
+steps = [
+  { pipe = "extract_contract_pages", result = "pages" },
+  { pipe = "analyze_contract_clauses", result = "analysis" },
+]
+
+[pipe.extract_contract_pages]
+type        = "PipeExtract"
+description = "Extract text content from a contract document"
+inputs      = { contract = "Document" }
+output      = "Page[]"
+model       = "@default-text-from-pdf"
+
+[pipe.analyze_contract_clauses]
+type = "PipeLLM"
+description = "Analyze contract pages to extract key clauses and obligations"
+inputs = { pages = "Page[]" }
+output = "ContractAnalysis"
+model = "$engineering-structured"
+prompt = """You are a legal contract analyst. Analyze the following vendor contract and extract all key clauses and obligations.
+
+For each clause, identify:
+- The clause title/heading
+- The full clause text
+- The type of obligation (must_do, must_not_do, may_do, or conditional)
+- The risk level (low, medium, high, or critical)
+- The parties involved
+
+Also provide:
+- The contract title and vendor name
+- Effective and expiration dates if found
+- An overall risk assessment
+- An executive summary
+- Any red flags or concerns
+
+Contract content:
+
+@pages"""

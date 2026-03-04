@@ -1,0 +1,12 @@
+[package]
+name = "contract_clause_extract"
+address = "github.com/RobinHrt/contract_clause_extraction"
+display_name = "Contract Clause Extraction"
+version = "0.1.0"
+description = "Extract key clauses and obligations from vendor contracts"
+license = "MIT"
+mthds_version = ">=1.0.0"
+main_pipe = "extract_contract_clauses"
+
+[exports.contract_clause_extraction]
+pipes = ["extract_contract_clauses", "process_single_contract", "extract_contract_pages", "analyze_contract_clauses"]

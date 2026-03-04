@@ -1,0 +1,15 @@
+{
+  "contracts": {
+    "concept": "native.Document",
+    "content": [
+      {
+        "url": "inputs/contract_cloud_services.pdf",
+        "mime_type": "application/pdf"
+      },
+      {
+        "url": "inputs/contract_analytics_platform.pdf",
+        "mime_type": "application/pdf"
+      }
+    ]
+  }
+}
